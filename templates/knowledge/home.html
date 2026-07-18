@@ -1,0 +1,39 @@
+{% extends 'knowledge/base.html' %}
+{% block title %}Knowledge Assistant{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">[ DOCUMENT INTELLIGENCE ]</p>
+  <h1>Understand your<br><em>documents.</em></h1>
+  <p class="lede">Upload a document, ask a question, and get a clear answer based only on what your file says.</p>
+</section>
+
+<section class="upload-panel">
+  <div class="panel-head"><span>01 / INGEST</span><span>PDF · DOCX · TXT / 15 MB MAX</span></div>
+  <form method="post" enctype="multipart/form-data" class="upload-form">
+    {% csrf_token %}
+    <label class="dropzone" for="id_file">
+      <span class="upload-icon">↑</span>
+      <strong>Drop your document here</strong>
+      <small>or choose a file from your computer</small>
+      {{ form.file }}
+    </label>
+    {% if form.file.errors %}<div class="form-error">{{ form.file.errors|striptags }}</div>{% endif %}
+    <button type="submit">UPLOAD DOCUMENT <span>→</span></button>
+  </form>
+</section>
+
+{% if documents %}
+<section class="recent">
+  <div class="section-label">RECENT DOCUMENTS</div>
+  <div class="document-list">
+    {% for document in documents %}
+    <a href="{% url 'document' document.pk %}" class="document-row">
+      <span class="file-glyph">▤</span>
+      <span>{{ document.original_name }}</span>
+      <small>{{ document.created_at|date:'M j, Y' }}</small><b>→</b>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

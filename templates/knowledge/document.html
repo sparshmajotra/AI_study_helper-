@@ -1,0 +1,39 @@
+{% extends 'knowledge/base.html' %}
+{% block title %}{{ document.original_name }} — Knowledge Assistant{% endblock %}
+{% block content %}
+<section class="workspace-head">
+  <a href="{% url 'home' %}" class="back">← ALL DOCUMENTS</a>
+  <div class="document-meta"><span class="file-glyph">▤</span><div><p>ACTIVE DOCUMENT</p><h1>{{ document.original_name }}</h1></div><span class="ready">READY</span></div>
+</section>
+<section class="qa-layout">
+  <div class="query-panel">
+    <p class="eyebrow">[ QUERY THE FILE ]</p>
+    <h2>What do you<br>want to know?</h2>
+    <form method="post" class="question-form">
+      {% csrf_token %}
+      {{ form.question }}
+      {% if form.question.errors %}<div class="form-error">{{ form.question.errors|striptags }}</div>{% endif %}
+      <button type="submit">ASK QUESTION <span>→</span></button>
+    </form>
+    <div class="hints"><span>TRY ASKING</span><p>“What are the key conclusions?”</p><p>“Summarize the main argument.”</p><p>“What actions are recommended?”</p></div>
+  </div>
+  <div class="answers-panel">
+    <div class="panel-head"><span>02 / ANSWERS</span><span>{{ questions|length }} QUERIES</span></div>
+    {% if questions %}
+      {% for item in questions %}
+      <article class="answer-card">
+        <div class="question-label">Q / {{ item.text }}</div>
+        <div class="answer-text">{{ item.answer|linebreaks }}</div>
+        {% if item.sources %}
+        <details><summary>VIEW SOURCE PASSAGES ({{ item.sources|length }})</summary>
+          {% for source in item.sources %}<p class="source">{{ source }}</p>{% endfor %}
+        </details>
+        {% endif %}
+      </article>
+      {% endfor %}
+    {% else %}
+      <div class="empty-answer"><span>◇</span><p>Your answers will appear here.</p><small>Every response is anchored to your document.</small></div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
