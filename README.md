@@ -107,6 +107,18 @@ requirements.txt        Python dependencies
 python manage.py test
 ```
 
+## Deploy on Render
+
+This repository includes `render.yaml` and `build.sh` for Render deployment.
+
+1. In Render, select **New → Blueprint** and connect this GitHub repository.
+2. Render detects `render.yaml`; create the `ai-study-helper` web service and database.
+3. In the web service’s **Environment** page, add `GROQ_API_KEY` with a newly generated Groq key. Do not add it to GitHub.
+4. Create a persistent disk mounted at `/opt/render/project/src/media` if you want uploaded source files kept between deployments.
+5. Deploy. Render generates `DJANGO_SECRET_KEY`, configures the build command, and runs migrations automatically.
+
+For manual setup, use `bash build.sh` as the build command and `gunicorn config.wsgi:application` as the start command. Set `DJANGO_DEBUG=false`; Render supplies `RENDER_EXTERNAL_HOSTNAME` automatically, which this project allows as a Django host.
+
 ## Notes for deployment
 
 Before deploying, set `DJANGO_DEBUG=false`, use a strong `DJANGO_SECRET_KEY`, configure `DJANGO_ALLOWED_HOSTS`, and replace SQLite with a production database when needed. Store API keys in your hosting platform’s secret manager rather than in source files.
