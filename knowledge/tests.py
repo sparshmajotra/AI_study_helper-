@@ -1,11 +1,20 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Document
+from .services import retrieve
 
 
+@override_settings(GROQ_API_KEY="", OPENAI_API_KEY="")
 class DocumentWorkflowTests(TestCase):
+    def test_retrieval_returns_only_relevant_passages(self):
+        text = "The launch date is 14 October.\n\nThe office is closed on Sundays."
+        results = retrieve("When is the launch date?", text)
+
+        self.assertEqual(len(results), 1)
+        self.assertIn("14 October", results[0])
+
     def test_text_document_can_be_uploaded_and_queried(self):
         upload = SimpleUploadedFile(
             "project-notes.txt",

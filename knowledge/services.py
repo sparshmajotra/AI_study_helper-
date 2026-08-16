@@ -1,10 +1,12 @@
 import re
+import logging
 from collections import Counter
 from pathlib import Path
 
 from django.conf import settings
 
 WORD = re.compile(r"[a-zA-Z0-9']+")
+logger = logging.getLogger(__name__)
 
 
 def extract_text(uploaded_file):
@@ -90,7 +92,7 @@ def answer_question(question, document_text):
             return response.choices[0].message.content.strip(), evidence
         except Exception:
             # Keep the document assistant usable if the optional provider is unavailable.
-            pass
+            logger.exception("AI answer generation failed")
 
     return (
         "I found relevant passages, but an AI-generated summary is not available. "

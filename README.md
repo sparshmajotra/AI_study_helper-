@@ -1,128 +1,129 @@
 # AI Study Helper
 
-AI Study Helper is a Django web application that lets you upload a document and ask clear, natural-language questions about it. It finds the most relevant parts of your document, then uses Groq AI to create a short, easy-to-read answer grounded in those passages.
+AI Study Helper is a Django document question-answering application. Upload a PDF, DOCX, or TXT file, ask a question in plain English, and receive a concise answer grounded in the relevant passages.
 
-> Upload a file. Ask a question. Understand the answer.
+> **Upload. Ask. Understand.**
 
 ## Features
 
-- Upload **PDF**, **DOCX**, and **TXT** documents (up to 15 MB)
-- Ask questions about one uploaded document at a time
-- Retrieve the most relevant document passages before answering
-- Generate concise answers in simple language with Groq
-- View the supporting source passages for each answer
-- Keep recent documents and question history in a local SQLite database
-- Responsive, technical white-and-grey interface
-- Works without an AI key: relevant source passages remain available
+- Supports PDF, DOCX, and TXT uploads up to 15 MB
+- Retrieves passages most relevant to each question
+- Uses Groq for concise, document-grounded answers
+- Shows supporting source passages for verification
+- Keeps document and question history in the database
+- Includes a responsive technical white-and-grey interface
+- Continues to show source passages without an AI key
 
 ## How it works
 
-1. The document text is extracted when the file is uploaded.
-2. The app breaks the text into manageable passages.
-3. For each question, it selects the passages most related to the question.
-4. Groq receives only those passages and is instructed to answer using them alone.
-5. The answer and its source passages are saved with the document.
+1. A document is uploaded and its text is extracted.
+2. The text is divided into overlapping passages.
+3. The app ranks passages against the user's question.
+4. Only the best matching passages are sent to the AI model.
+5. The generated answer and sources are saved with the document.
 
-This retrieval-first approach keeps answers tied to the uploaded file instead of relying on general AI knowledge.
+This retrieval-first flow keeps the model focused on the uploaded document and reduces unsupported answers.
 
-## Tech stack
+## Technology
 
-- **Backend:** Python and Django
-- **Database:** SQLite
-- **AI provider:** Groq (OpenAI-compatible API)
-- **Document parsing:** `pypdf` and `python-docx`
-- **Frontend:** Django templates and custom CSS
+| Area | Tools |
+| --- | --- |
+| Backend | Python, Django |
+| AI | Groq, OpenAI-compatible Python SDK |
+| Document parsing | pypdf, python-docx |
+| Database | SQLite locally, PostgreSQL on Render |
+| Production server | Gunicorn, WhiteNoise |
+| Frontend | Django templates and custom CSS |
 
-## Quick start
+## Run locally
 
-### 1. Clone the repository
+### Prerequisites
+
+- Python 3.11 or newer
+- A Groq API key (optional, but needed for AI-written answers)
+
+### Setup
 
 ```powershell
 git clone https://github.com/sparshmajotra/AI_study_helper-.git
 cd "AI_study_helper-"
-```
 
-### 2. Create and activate a virtual environment
-
-```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-### 3. Install dependencies
-
-```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 4. Add your Groq API key
-
-Create your local environment file:
+Create a local secrets file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Open `.env` and add a newly generated Groq key:
+Edit `.env` and add a newly generated Groq key:
 
 ```env
 GROQ_API_KEY=your-groq-api-key
-GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_MODEL=openai/gpt-oss-120b
 ```
 
-Never commit `.env` or share its contents. The project’s `.gitignore` already excludes it.
-
-### 5. Prepare the database and run the app
+Run migrations and start the application:
 
 ```powershell
 python manage.py migrate
 python manage.py runserver
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
+Visit [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-## Using the application
+> Keep `.env` private. It is excluded from Git and must never be committed.
 
-1. Upload a PDF, DOCX, or TXT file.
-2. Enter a focused question, such as *“What are the main conclusions?”*
-3. Read the concise answer.
-4. Expand **View source passages** when you want to check where the answer came from.
+## Test the project
 
-If you see a message saying that an AI-generated summary is unavailable, confirm that `.env` exists beside `manage.py`, contains a valid `GROQ_API_KEY`, and restart the Django server.
+```powershell
+python manage.py check
+python manage.py test
+```
+
+## Deploy to Render
+
+The repository includes a `render.yaml` Blueprint that provisions a Django web service and PostgreSQL database.
+
+1. In Render, choose **New → Blueprint** and connect this repository.
+2. Select the `master` branch and deploy the Blueprint.
+3. Open the `ai-study-helper` web service after both resources are ready.
+4. In **Environment**, provide a value for `GROQ_API_KEY`.
+5. Save with **Save, rebuild, and deploy**.
+6. Open the generated `onrender.com` URL when deployment completes.
+
+The Blueprint supplies the production database URL, generates a Django secret key, runs migrations, collects static files, and starts Gunicorn.
+
+### Storage note
+
+PostgreSQL stores the extracted text, documents, questions, and answers. Free Render web services use an ephemeral filesystem, so original uploaded files can be removed after a restart or redeploy. A persistent disk for the `media` directory is available on paid Render web services if retaining source files is required.
 
 ## Project structure
 
 ```text
-config/                 Django configuration and environment settings
-knowledge/              Upload, retrieval, question-answering, and data models
-templates/knowledge/    User interface templates
-static/knowledge/       Application styles
+config/                 Django settings and URL configuration
+knowledge/              Upload, extraction, retrieval, and Q&A logic
+templates/knowledge/    Django templates
+static/knowledge/       Application stylesheet
+build.sh                Render build command
+render.yaml             Render Blueprint configuration
 .env.example            Safe environment-variable template
-requirements.txt        Python dependencies
 ```
 
-## Running tests
+## Security notes
 
-```powershell
-python manage.py test
-```
+- Store API keys only in `.env` locally or Render environment variables in production.
+- Use `DJANGO_DEBUG=false` in production.
+- Render generates the production `DJANGO_SECRET_KEY` through the Blueprint.
+- Rotate any API key that has been accidentally shared.
 
-## Deploy on Render
+## Author
 
-This repository includes `render.yaml` and `build.sh` for Render deployment.
-
-1. In Render, select **New → Blueprint** and connect this GitHub repository.
-2. Render detects `render.yaml`; create the `ai-study-helper` web service and database.
-3. In the web service’s **Environment** page, add `GROQ_API_KEY` with a newly generated Groq key. Do not add it to GitHub.
-4. Create a persistent disk mounted at `/opt/render/project/src/media` if you want uploaded source files kept between deployments.
-5. Deploy. Render generates `DJANGO_SECRET_KEY`, configures the build command, and runs migrations automatically.
-
-For manual setup, use `bash build.sh` as the build command and `gunicorn config.wsgi:application` as the start command. Set `DJANGO_DEBUG=false`; Render supplies `RENDER_EXTERNAL_HOSTNAME` automatically, which this project allows as a Django host.
-
-## Notes for deployment
-
-Before deploying, set `DJANGO_DEBUG=false`, use a strong `DJANGO_SECRET_KEY`, configure `DJANGO_ALLOWED_HOSTS`, and replace SQLite with a production database when needed. Store API keys in your hosting platform’s secret manager rather than in source files.
+Built by **Sparsh Majotra**.
 
 ## License
 
-This project is currently provided without a license. Add one before distributing or reusing it publicly.
+No license has been selected yet. Add one before distributing or reusing this project publicly.
